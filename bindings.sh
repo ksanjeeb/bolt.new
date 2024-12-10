@@ -2,15 +2,20 @@
 
 bindings=""
 
-while IFS= read -r line || [ -n "$line" ]; do
-  if [[ ! "$line" =~ ^# ]] && [[ -n "$line" ]]; then
-    name=$(echo "$line" | cut -d '=' -f 1)
-    value=$(echo "$line" | cut -d '=' -f 2-)
-    value=$(echo $value | sed 's/^"\(.*\)"$/\1/')
+# Iterate over all environment variables
+while IFS='=' read -r name value; do
+  # Skip Render's system variables or variables starting with underscores if needed
+  if [[ "$name" != "RENDER*" ]] && [[ "$name" != "_"* ]]; then
+    # Escape special characters in value
+    value=$(printf '%q' "$value")
+
+    # Append to bindings
     bindings+="--binding ${name}=${value} "
   fi
-done < .env
+done < <(env)
 
-bindings=$(echo $bindings | sed 's/[[:space:]]*$//')
+# Remove trailing spaces from bindings
+bindings=$(echo "$bindings" | sed 's/[[:space:]]*$//')
 
-echo $bindings
+# Output the final bindings string
+echo "$bindings"
